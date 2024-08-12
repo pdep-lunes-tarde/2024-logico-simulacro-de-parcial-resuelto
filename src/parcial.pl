@@ -155,8 +155,12 @@ recompensaEnOro(Aventurero, 0):-
 recompensaEnOro(Aventurero, RecompensaTotal):-
     aventurero(Aventurero, _, _),
     not(murio(Aventurero)),
-    findall(Recompensa, (resultado(Aventurero, Mision, exitoso), oroPorRealizar(Mision, Recompensa)), Recompensas),
+    findall(Recompensa, recompensaDeMision(Aventurero, _, Recompensa), Recompensas),
     sum_list(Recompensas, RecompensaTotal).
+
+recompensaDeMision(Aventurero, Mision, Recompensa):-
+    resultado(Aventurero, Mision, exitoso),
+    oroPorRealizar(Mision, Recompensa).
 
 oroPorRealizar(Mision, Oro):-
     categoria(Mision, Categoria),
