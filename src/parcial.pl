@@ -128,6 +128,15 @@ resultado(Personaje, Mision, Resultado):-
     not(puedeRealizar(Personaje, Mision)),
     categoria(Mision, Categoria),
     resultadoNegativo(Categoria, Resultado).
+% resultado(Personaje, Mision, fatal):-
+%     intento(Personaje, Mision),
+%     not(puedeRealizar(Personaje, Mision)),
+%     categoria(Mision, heroica).
+% resultado(Personaje, Mision, fallido):-
+%     intento(Personaje, Mision),
+%     not(puedeRealizar(Personaje, Mision)),
+%     categoria(Mision, Categoria),
+%     Categoria \= heroica.
 
 resultadoNegativo(heroica, fatal).
 resultadoNegativo(aspirante, fallido).
@@ -137,6 +146,34 @@ afortunado(Personaje):-
     personaje(Personaje, _, _),
     forall(intento(Personaje, Mision),
             resultado(Personaje, Mision, exitoso)).
+
+murio(Personaje):-
+    resultado(Personaje, _, fatal).
+
+recompensaEnOro(Personaje, 0):-
+    murio(Personaje).
+recompensaEnOro(Personaje, RecompensaTotal):-
+    personaje(Personaje, _, _),
+    findall(Recompensa, (resultado(Personaje, Mision, exitoso), oroPorRealizar(Mision, Recompensa)), Recompensas),
+    sum_list(Recompensas, RecompensaTotal).
+
+oroPorRealizar(Mision, Oro):-
+    categoria(Mision, Categoria),
+    oroSegunCategoria(Categoria, Oro).
+
+oroSegunCategoria(deBarrio, 2).
+oroSegunCategoria(aspirante, 15).
+oroSegunCategoria(heroica, 50).
+
+masRecompensado(Personaje):-
+    recompensaEnOro(Personaje, Recompensa),
+    forall(
+        (
+            recompensaEnOro(OtroPersonaje, RecompensaDelOtro),
+            OtroPersonaje \= Personaje
+        ),
+        Recompensa > RecompensaDelOtro
+    ).
 
 :- begin_tests_con(parte2, [personaje(guybrush, pirata, 50)]).
 
@@ -169,6 +206,21 @@ test("El resultado de una mision intentada es fallido si el aventurero NO podia 
 
 test("Un aventurero es afortunado si cumplio exitosamente todas las misiones que intento", set(Personaje == [atalanta, thorfinn, guybrush])):-
     afortunado(Personaje).
+
+test("Un personaje no obtiene nada de oro si murio (obtuvo un resultado fatal) en alguna mision", nondet):-
+    recompensaEnOro(rin, 0).
+test("El oro que obtiene un personaje que no murio es la suma del oro obtenido por cada una de sus misiones exitosas"):-
+    recompensaEnOro(thorfinn, 50).
+
+test("El oro que corresponde por una mision de barrio es 2"):-
+    oroPorRealizar(ayudarACruzarLaCalle, 2).
+test("El oro que corresponde por una mision de aspirante es 15"):-
+    oroPorRealizar(escoltaRealDe(diplomata), 15).
+test("El oro que corresponde por una mision heroica es 50"):-
+    oroPorRealizar(pesadillaDeLaCueva, 50).
+
+test("El personaje mas recompensado es aquel que mas oro debe cobrar como recompensa"):-
+    masRecompensado(thorfinn).
 
 :- end_tests(parte2).
 
