@@ -88,7 +88,8 @@ puedeRealizar(Personaje, pesadillaDeLaCueva):-
     poseeCaracteristica(Personaje, agresivo).
 puedeRealizar(Personaje, pesadillaDeLaCueva):-
     conoceHechizoTanPoderosoComo(Personaje, fuego, 30).
-puedeRealizar(Personaje, rosasHeladas):-
+puedeRealizar(Personaje, rosasHeladas(Lugar)):-
+    categoria(rosasHeladas(Lugar), _),
     tieneFondosParaComprar(Personaje, pociones),
     conoceHechizoTanPoderosoComo(Personaje, frio, 20).
 
@@ -102,6 +103,40 @@ facil(Mision):-
         personaje(Personaje, _, _),
         puedeRealizar(Personaje, Mision)
     ).
+
+categoria(ayudarACruzarLaCalle, deBarrio).
+categoria(ayudarACortarLenia, deBarrio).
+categoria(escoltaRealDe(diplomata), aspirante).
+categoria(escoltaRealDe(princesa), heroica).
+categoria(pesadillaDeLaCueva, heroica).
+categoria(rosasHeladas(montes), deBarrio).
+categoria(rosasHeladas(altasMontanias), aspirante).
+
+intento(kelsier, pesadillaDeLaCueva).
+intento(kelsier, ayudarACortarLenia).
+intento(rin, rosasHeladas(altasMontanias)).
+intento(rin, escoltaRealDe(princesa)).
+intento(thorfinn, pesadillaDeLaCueva).
+intento(atalanta, ayudarACruzarLaCalle).
+intento(atalanta, ayudarACortarLenia).
+
+resultado(Personaje, Mision, exitoso):-
+    intento(Personaje, Mision),
+    puedeRealizar(Personaje, Mision).
+resultado(Personaje, Mision, Resultado):-
+    intento(Personaje, Mision),
+    not(puedeRealizar(Personaje, Mision)),
+    categoria(Mision, Categoria),
+    resultadoNegativo(Categoria, Resultado).
+
+resultadoNegativo(heroica, fatal).
+resultadoNegativo(aspirante, fallido).
+resultadoNegativo(deBarrio, fallido).
+
+afortunado(Personaje):-
+    personaje(Personaje, _, _),
+    forall(intento(Personaje, Mision),
+            resultado(Personaje, Mision, exitoso)).
 
 :- begin_tests_con(parte2, [personaje(guybrush, pirata, 50)]).
 
@@ -120,9 +155,20 @@ test("Si un personaje conoce un hechizo de fuego de potencia mayor o igual a 30,
 test("Si un personaje no es un barbaro agresivo ni conoce un hechizo de fuego de potencia mayor o igual a 30, NO puede realizar la mision 'pesadilla de la cueva'"):-
     not(puedeRealizar(rin, pesadillaDeLaCueva)).
 test("Si un personaje tiene fondos para comprar pociones (20 oro) y sabe un hechizo de frio, puede realizar la mision 'rosas heladas'", set(Personaje == [rin])):-
-    puedeRealizar(Personaje, rosasHeladas).
+    puedeRealizar(Personaje, rosasHeladas(altasMontanias)).
 
 test("Una mision es facil si y solo si todos los aventureros pueden realizarla", set(Mision == [ayudarACruzarLaCalle])):-
     facil(Mision).
 
+test("El resultado de una mision intentada es exitoso si el aventurero podia realizarla", nondet):-
+    resultado(thorfinn, pesadillaDeLaCueva, exitoso).
+test("El resultado de una mision inentada es fatal si el aventurero NO podia realizarla y la mision era heroica", nondet):-
+    resultado(kelsier, pesadillaDeLaCueva, fatal).
+test("El resultado de una mision intentada es fallido si el aventurero NO podia realizarla y la mision era de barrio o de aspirante", nondet):-
+    resultado(kelsier, ayudarACortarLenia, fallido).
+
+test("Un aventurero es afortunado si cumplio exitosamente todas las misiones que intento", set(Personaje == [atalanta, thorfinn, guybrush])):-
+    afortunado(Personaje).
+
 :- end_tests(parte2).
+
