@@ -34,7 +34,10 @@ puedeDisponderDePermisoReal(Personaje):-
     tiene(Personaje, permisoReal).
 puedeDisponderDePermisoReal(Personaje):-
     personaje(Personaje, _, Oro),
-    Oro >= 50.
+    precio(permisoReal, PrecioDePermisoReal),
+    Oro >= PrecioDePermisoReal.
+
+precio(permisoReal, 50).
 
 :- begin_tests_con(parte1, [personaje(guybrush, pirata, 50)]).
 
@@ -45,7 +48,7 @@ test("Un aventurero no puede ser camarada de si mismo"):-
 test("Dos aventureros no son camaradas si son de clases distintas"):-
     not(camaradas(kelsier, rin)).
 
-test("Una caracteristica es popular entre una clase si todos los miembros la poseen", nondet):-
+test("Una caracteristica es popular entre una clase si todos los miembros de la clase la poseen", nondet):-
     caracteristicaPopular(responsable, mago).
 test("Una caracteristica NO es popular entre una clase si algun miembro no la posee"):-
     not(caracteristicaPopular(pacifico, mago)).
